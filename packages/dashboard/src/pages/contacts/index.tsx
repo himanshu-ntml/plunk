@@ -9,9 +9,9 @@ import React, { useState } from "react";
 import { type FieldError, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Card, Empty, FullscreenLoader, Modal, Skeleton, Table, Toggle, Dropdown } from "../../components";
+import { Card, Empty, FullscreenLoader, Modal, Skeleton, Table, Toggle, Dropdown, MultiselectDropdown } from "../../components";
 import { Dashboard } from "../../layouts";
-import { searchContacts, useContacts } from "../../lib/hooks/contacts";
+import { searchContacts, useContacts, useContactMetadata } from "../../lib/hooks/contacts";
 import { useActiveProject } from "../../lib/hooks/projects";
 import { useUser } from "../../lib/hooks/users";
 import { network } from "../../lib/network";
@@ -34,11 +34,13 @@ export default function Index() {
         const [page, setPage] = useState(1);
         const [query, setQuery] = useState<string>();
         const [statusFilter, setStatusFilter] = useState<string>("all");
+        const [metaFilter, setMetaFilter] = useState<string[]>([]);
 
 	const project = useActiveProject();
 	const { data: user } = useUser();
-	const { data: contacts, mutate } = useContacts(page);
-	const { data: search } = searchContacts(query);
+        const { data: contacts, mutate } = useContacts(page);
+        const { data: search } = searchContacts(query);
+        const { data: metadata } = useContactMetadata();
 
 	const [contactModal, setContactModal] = useState(false);
 
@@ -134,7 +136,23 @@ export default function Index() {
                                                 : statusFilter === "subscribed"
                                                 ? c.subscribed
                                                 : !c.subscribed,
-                                );
+                                )
+                                .filter((c) => {
+                                        if (metaFilter.length === 0) {
+                                                return true;
+                                        }
+
+                                        if (!c.data) {
+                                                return false;
+                                        }
+
+                                        try {
+                                                const parsed = JSON.parse(c.data);
+                                                return metaFilter.every((k) => Object.hasOwn(parsed, k));
+                                        } catch {
+                                                return false;
+                                        }
+                                });
 
                         if (filtered.length > 0) {
                                 return (
@@ -144,6 +162,15 @@ export default function Index() {
                                                                 .sort((a, b) => {
                                                                         const aTrigger = a.triggers.length > 0 ? a.triggers.sort()[0].createdAt : a.createdAt;
 
+                                );
+
+                        if (filtered.length > 0) {
+                                return (
+                                        <>
+                                                <Table
+                                                        values={filtered
+                                                                .sort((a, b) => {
+                                                                        const aTrigger = a.triggers.length > 0 ? a.triggers.sort()[0].createdAt : a.createdAt;
                                                                         const bTrigger = b.triggers.length > 0 ? b.triggers.sort()[0].createdAt : b.createdAt;
 
                                                                         return bTrigger > aTrigger ? 1 : -1;
@@ -194,6 +221,30 @@ export default function Index() {
 		}
 
                if (contacts) {
+                        const filtered = contacts.contacts
+                                .filter((c) =>
+                                        statusFilter === "all"
+                                                ? true
+                                                : statusFilter === "subscribed"
+                                                ? c.subscribed
+                                                : !c.subscribed,
+                                )
+                                .filter((c) => {
+                                        if (metaFilter.length === 0) {
+                                                return true;
+                                        }
+
+                                        if (!c.data) {
+                                                return false;
+                                        }
+
+                                        try {
+                                                const parsed = JSON.parse(c.data);
+                                                return metaFilter.every((k) => Object.hasOwn(parsed, k));
+                                        } catch {
+                                                return false;
+                                        }
+                                });
                         const filtered = contacts.contacts.filter((c) =>
                                 statusFilter === "all"
                                         ? true
@@ -459,6 +510,7 @@ export default function Index() {
 					title={"Contacts"}
 					description={"View and manage your contacts"}
 					actions={
+                                                <div className={"grid w-full gap-3 md:w-fit md:grid-cols-4"}>
                                                 <div className={"grid w-full gap-3 md:w-fit md:grid-cols-3"}>
                                                         <input
                                                                 onChange={(e) => setQuery(e.target.value)}
@@ -478,6 +530,13 @@ export default function Index() {
                                                                         { name: "Unsubscribed", value: "unsubscribed" },
                                                                 ]}
                                                                 selectedValue={statusFilter}
+                                                        />
+
+                                                        <MultiselectDropdown
+                                                                disabled={!metadata}
+                                                                onChange={(v) => setMetaFilter(v)}
+                                                                values={(metadata ?? []).map((k) => ({ name: k, value: k }))}
+                                                                selectedValues={metaFilter}
                                                         />
 
                                                         <motion.button

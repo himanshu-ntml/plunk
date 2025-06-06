@@ -17,9 +17,9 @@ export interface MultiselectDropdownProps {
 export default function MultiselectDropdown({
 	onChange,
 	values,
-	selectedValues: PropsselectedValues,
-	className,
-	disabled = false,
+       selectedValues: propsSelectedValues,
+       className,
+       disabled = false,
 }: MultiselectDropdownProps) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
@@ -28,10 +28,10 @@ export default function MultiselectDropdown({
 	const ref = React.createRef<HTMLDivElement>();
 
 	useEffect(() => {
-		if (PropsselectedValues) {
-			setSelectedValues(PropsselectedValues);
-		}
-	}, [PropsselectedValues]);
+               if (propsSelectedValues) {
+                       setSelectedValues(propsSelectedValues);
+               }
+       }, [propsSelectedValues]);
 
 	useEffect(() => {
 		const mutableRef = ref as MutableRefObject<HTMLDivElement | null>;
