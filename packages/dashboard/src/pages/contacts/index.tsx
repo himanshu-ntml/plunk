@@ -162,6 +162,15 @@ export default function Index() {
                                                                 .sort((a, b) => {
                                                                         const aTrigger = a.triggers.length > 0 ? a.triggers.sort()[0].createdAt : a.createdAt;
 
+                                );
+
+                        if (filtered.length > 0) {
+                                return (
+                                        <>
+                                                <Table
+                                                        values={filtered
+                                                                .sort((a, b) => {
+                                                                        const aTrigger = a.triggers.length > 0 ? a.triggers.sort()[0].createdAt : a.createdAt;
                                                                         const bTrigger = b.triggers.length > 0 ? b.triggers.sort()[0].createdAt : b.createdAt;
 
                                                                         return bTrigger > aTrigger ? 1 : -1;
@@ -236,6 +245,13 @@ export default function Index() {
                                                 return false;
                                         }
                                 });
+                        const filtered = contacts.contacts.filter((c) =>
+                                statusFilter === "all"
+                                        ? true
+                                        : statusFilter === "subscribed"
+                                        ? c.subscribed
+                                        : !c.subscribed,
+                        );
 
                         if (filtered.length > 0) {
                                 return (
@@ -495,6 +511,7 @@ export default function Index() {
 					description={"View and manage your contacts"}
 					actions={
                                                 <div className={"grid w-full gap-3 md:w-fit md:grid-cols-4"}>
+                                                <div className={"grid w-full gap-3 md:w-fit md:grid-cols-3"}>
                                                         <input
                                                                 onChange={(e) => setQuery(e.target.value)}
                                                                 autoComplete={"off"}
